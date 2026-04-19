@@ -8,7 +8,9 @@
     "start": "next start"
   },
   "dependencies": {
+    "@ai-sdk/google": "^3.0.64",
     "@google/generative-ai": "^0.21.0",
+    "ai": "^6.0.168",
     "next": "^15.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
