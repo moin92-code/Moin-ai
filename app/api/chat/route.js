@@ -1,30 +1,48 @@
-// app/api/chat/route.js
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { NextResponse } from "next/server";
+import { generateText } from "ai";
+import { google } from "@ai-sdk/google";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-const SYSTEM_PROMPT = `You are Moin AI, an advanced, highly intelligent study assistant... (Paste full prompt here)`;
+const SYSTEM_PROMPT = `You are Moin AI, an advanced, highly intelligent study assistant. You help students learn, understand concepts, and achieve their academic goals. Be friendly, clear, and thorough in your explanations.`;
 
 export async function POST(req) {
-  const { messages } = await req.json();
-  
-  // Format history for Gemini
-  const model = genAI.getGenerativeModel({ 
-    model: "gemini-1.5-pro",
-    systemInstruction: SYSTEM_PROMPT 
-  });
+  try {
+    const { message, history } = await req.json();
 
-  const chat = model.startChat({
-    history: messages.slice(0, -1).map(m => ({
-      role: m.role === 'user' ? 'user' : 'model',
-      parts: [{ text: m.content }],
-    })),
-  });
+    console.log("[v0] Received message:", message);
 
-  const lastMessage = messages[messages.length - 1].content;
-  const result = await chat.sendMessage(lastMessage);
-  const response = await result.response;
-  
-  return NextResponse.json({ content: response.text() });
+    // Build messages array from history
+    const messages = [];
+    
+    if (history && history.length > 0) {
+      for (const msg of history) {
+        messages.push({
+          role: msg.role === 'user' ? 'user' : 'assistant',
+          content: msg.content
+        });
+      }
     }
+    
+    // Add the current message
+    messages.push({
+      role: 'user',
+      content: message
+    });
+
+    console.log("[v0] Calling AI with messages:", messages.length);
+
+    const { text } = await generateText({
+      model: google("gemini-2.0-flash"),
+      system: SYSTEM_PROMPT,
+      messages: messages,
+    });
+
+    console.log("[v0] Got response:", text?.substring(0, 100));
+
+    return Response.json({ response: text });
+  } catch (error) {
+    console.error("[v0] Chat API Error:", error);
+    return Response.json(
+      { error: error.message || "Failed to get response" },
+      { status: 500 }
+    );
+  }
+}
