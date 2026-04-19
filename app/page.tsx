@@ -37,13 +37,26 @@ export default function Home() {
     setIsLoading(true)
 
     try {
+      // Build history from previous messages (excluding the one we just added)
+      const history = messages.map(m => ({
+        role: m.role,
+        content: m.content
+      }))
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input.trim() }),
+        body: JSON.stringify({ 
+          message: input.trim(),
+          history: history
+        }),
       })
 
       const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to get response")
+      }
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
