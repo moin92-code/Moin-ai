@@ -43,6 +43,9 @@ export default function Home() {
         content: m.content
       }))
 
+      console.log("[v0] Sending message:", input.trim())
+      console.log("[v0] History:", history)
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -52,7 +55,9 @@ export default function Home() {
         }),
       })
 
+      console.log("[v0] Response status:", response.status)
       const data = await response.json()
+      console.log("[v0] Response data:", data)
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to get response")
